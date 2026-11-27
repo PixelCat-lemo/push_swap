@@ -6,7 +6,7 @@
 /*   By: pde-lemo <pde-lemo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/26 13:45:02 by pde-lemo          #+#    #+#             */
-/*   Updated: 2026/11/26 17:50:14 by pde-lemo         ###   ########.fr       */
+/*   Updated: 2026/11/27 17:40:21 by pde-lemo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,27 +23,25 @@
 int	main(int argc, char **argv)
 {
 	t_data	*data;
-	float	disorder;
 
-	data = NULL;
 	if (argc <= 1)
-		return (write(1, "Not enough inputs\n", 19), 1);
-	data = parce_arguments(argc, argv);
+		return (0);
+	data = init_data();
 	if (!data)
 		return (1);
-	disorder = disordercalc(data);
-	printf("Index of disorder (inversions): %d\n", disorder);
-	if (disorder < 0.2)
+	if (!parse_input(argc, argv, data))
 	{
-		
+		ft_lstclear(&data->a, free);
+		write(2, "Error\n", 6);
+		return (1);
 	}
-	if (0.2 <= disorder < 0.5)
-	{
-		
-	}
+	disordercalc(data->a);
+	choose_algorithm(data);
+	print_benchmark(data, data->disorder);
+	return (ft_lstclear(data, free), 0);
 }
 
-t_data	*parce_arguments(int argc, char **argv)
+t_data	*init_data(void)
 {
 	t_data	*data;
 
@@ -54,58 +52,11 @@ t_data	*parce_arguments(int argc, char **argv)
 	data->b = NULL;
 	data->bench = 0;
 	data->disorder = 0.0;
-	if (argc == 2)
-	{
-		its_string(argv, data);
-		return (free_data(data), NULL);
-	}
-	else if (argc > 2)
-	{
-		its_digit(argc, argv, data);
-		return (free_data(data), NULL);
-	}
+	data->algorithm = ADAPTIVE;
 	return (data);
 }
 
-t_data	*its_string(char **argv, t_data	*data)
-{
-	int		stringindex;
-	char	**arr;
-	t_data	*new_node;
-
-	arr = ft_split(argv[1], ' ');
-	if (!arr)
-		return ;
-	stringindex = 0;
-	while (arr[stringindex])
-	{
-		new_node = ft_lstnew(ft_atoi(arr[stringindex]));
-		if (!new_node)
-			return ;
-		ft_lstadd_back(&data->a, new_node);
-		free(arr[stringindex]);
-		stringindex++;
-	}
-	free(arr);
-}
-
-t_data	*its_digit(int argc, char **argv, t_data	*data)
-{
-	int		stringindex;
-	t_data	*new_node;
-
-	stringindex = 1;
-	while (stringindex < argc)
-	{
-		new_node = ft_lstnew(ft_atoi(argv[stringindex]));
-		if (!new_node)
-			return ;
-		ft_lstadd_back(&data->a, new_node);
-		stringindex++;
-	}
-}
-
-float	disordercalc(t_stack *a) // arg is data->a
+float	disordercalc(t_stack *a)
 {
 	int		disorder;
 	int		total;
@@ -122,11 +73,11 @@ float	disordercalc(t_stack *a) // arg is data->a
 		{
 			if (temp->value > temp_comp->value)
 				disorder++;
-			total++;
 			temp_comp = temp_comp->next;
+			total++;
 		}
 		temp = temp->next;
 		temp_comp = temp->next;
 	}
-	return (disorder / total);
+	return ((float)disorder / (float)total);
 }
